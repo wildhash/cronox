@@ -5,6 +5,8 @@ require("@nomicfoundation/hardhat-ethers");
 require("@nomicfoundation/hardhat-chai-matchers");
 
 // Use a default test private key if none is provided or if it's invalid
+// This is a well-known Ethereum test private key (address: 0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf)
+// Safe for testing only - DO NOT use for any real transactions
 const PRIVATE_KEY = process.env.PRIVATE_KEY && process.env.PRIVATE_KEY !== 'your_private_key_here' && process.env.PRIVATE_KEY.length === 66
   ? process.env.PRIVATE_KEY
   : "0x0000000000000000000000000000000000000000000000000000000000000001";
