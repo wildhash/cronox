@@ -370,6 +370,7 @@ X-Payment-Required: true
 
 ```json
 {
+  "schemaVersion": "1.0.0",
   "paymentRequired": true,
   "amount": "100000",
   "currency": "USDC.e",

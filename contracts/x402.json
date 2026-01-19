@@ -8,6 +8,7 @@
     "PaymentRequiredResponse": {
       "type": "object",
       "required": [
+        "schemaVersion",
         "paymentRequired",
         "amount",
         "currency",
@@ -16,6 +17,11 @@
         "facilitatorUrl"
       ],
       "properties": {
+        "schemaVersion": {
+          "type": "string",
+          "description": "Version of the x402 schema (e.g., '1.0.0')",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
         "paymentRequired": {
           "type": "boolean",
           "const": true,
@@ -165,6 +171,7 @@
     {
       "description": "Example 402 Payment Required Response",
       "response": {
+        "schemaVersion": "1.0.0",
         "paymentRequired": true,
         "amount": "100000",
         "currency": "USDC.e",
