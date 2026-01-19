@@ -22,8 +22,12 @@ async function cleanup(exitCode: number = 0) {
   if (sellerProcess?.pid) {
     const pid = sellerProcess.pid;
     promises.push(new Promise((resolve) => {
-      kill(pid, 'SIGTERM', () => {
-        console.log('✓ Stopped Seller');
+      kill(pid, 'SIGTERM', (err) => {
+        if (err) {
+          console.error('✗ Error stopping Seller:', err.message);
+        } else {
+          console.log('✓ Stopped Seller');
+        }
         resolve();
       });
     }));
@@ -32,8 +36,12 @@ async function cleanup(exitCode: number = 0) {
   if (dashboardProcess?.pid) {
     const pid = dashboardProcess.pid;
     promises.push(new Promise((resolve) => {
-      kill(pid, 'SIGTERM', () => {
-        console.log('✓ Stopped Dashboard');
+      kill(pid, 'SIGTERM', (err) => {
+        if (err) {
+          console.error('✗ Error stopping Dashboard:', err.message);
+        } else {
+          console.log('✓ Stopped Dashboard');
+        }
         resolve();
       });
     }));
