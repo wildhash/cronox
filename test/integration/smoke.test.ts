@@ -5,7 +5,8 @@
  */
 
 import { expect } from 'chai';
-import { execSync, spawn, ChildProcess } from 'child_process';
+import { spawn, ChildProcess } from 'child_process';
+import kill from 'tree-kill';
 
 describe('Seller API Smoke Test', function() {
   this.timeout(30000); // 30 second timeout for starting server
@@ -31,36 +32,53 @@ describe('Seller API Smoke Test', function() {
     });
 
     // Wait for server to start
-    await new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error('Server failed to start within 25 seconds'));
-      }, 25000);
+    try {
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Server failed to start within 25 seconds'));
+        }, 25000);
 
-      const checkServer = async () => {
-        try {
-          const response = await fetch(`${SELLER_API_URL}/api/health`);
-          if (response.ok) {
-            clearTimeout(timeout);
-            console.log('Seller API started successfully');
-            resolve(true);
-          } else {
+        const checkServer = async () => {
+          try {
+            const response = await fetch(`${SELLER_API_URL}/api/health`);
+            if (response.ok) {
+              clearTimeout(timeout);
+              console.log('Seller API started successfully');
+              resolve(true);
+            } else {
+              setTimeout(checkServer, 500);
+            }
+          } catch (error) {
             setTimeout(checkServer, 500);
           }
-        } catch (error) {
-          setTimeout(checkServer, 500);
-        }
-      };
+        };
 
-      checkServer();
-    });
+        checkServer();
+      });
+    } catch (error) {
+      // Cleanup on failed start
+      if (serverProcess && serverProcess.pid) {
+        kill(serverProcess.pid);
+      }
+      throw error;
+    }
   });
 
-  after(function() {
-    // Clean up server process
-    if (serverProcess) {
+  after(function(done) {
+    // Clean up server process with proper timeout and fallback
+    if (serverProcess && serverProcess.pid) {
       console.log('Stopping Seller API...');
-      serverProcess.kill('SIGTERM');
-      serverProcess = null;
+      
+      // Use tree-kill for reliable cleanup including child processes
+      kill(serverProcess.pid, 'SIGTERM', (err) => {
+        if (err) {
+          console.error('Error stopping server:', err);
+        }
+        serverProcess = null;
+        done();
+      });
+    } else {
+      done();
     }
   });
 
