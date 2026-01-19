@@ -100,7 +100,11 @@ function startProcess(name, command, args) {
     });
 
     proc.stdout.on('data', (data) => {
-      // Suppress output in dry mode
+      // Suppress most output in dry mode, but show errors
+      const text = data.toString();
+      if (text.includes('Error:') || text.includes('EADDRINUSE')) {
+        console.log(`  ${text.trim()}`);
+      }
     });
 
     proc.stderr.on('data', (data) => {
@@ -114,15 +118,26 @@ function startProcess(name, command, args) {
       printError(`Failed: ${error.message}`);
       reject(error);
     });
+    
+    proc.on('exit', (code) => {
+      // Don't treat as error during the initial wait period
+    });
 
     setTimeout(() => {
-      if (proc.exitCode === null) {
+      // After initial wait, check if process is still alive
+      if (!proc.killed && proc.exitCode === null) {
         printSuccess(`${name} started`);
         resolve(proc);
+      } else if (proc.exitCode === 0) {
+        // Process exited cleanly but too soon
+        printError(`${name} exited too early (code 0)`);
+        reject(new Error(`${name} exited prematurely`));
+      } else if (proc.exitCode !== null) {
+        reject(new Error(`${name} failed with exit code ${proc.exitCode}`));
       } else {
         reject(new Error(`${name} failed`));
       }
-    }, 2000);
+    }, 3000);
   });
 }
 

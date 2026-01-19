@@ -161,7 +161,7 @@ function startProcess(name, command, args, color = COLORS.cyan) {
         printError(`${name} exited immediately with code ${proc.exitCode}`);
         reject(new Error(`${name} failed to start`));
       }
-    }, 2000);
+    }, 3000);
   });
 }
 

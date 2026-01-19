@@ -123,7 +123,50 @@ app.get('/api/info', (req, res) => {
 /**
  * List streams
  */
-app.get('/api/streams/:count?', async (req, res) => {
+app.get('/api/streams', async (req, res) => {
+  try {
+    if (!parallelPaySDK) {
+      return res.status(503).json({ error: 'SDK not initialized - deploy contracts first' });
+    }
+
+    const count = parseInt(req.query.count as string || '10');
+    const nextStreamId = await parallelPaySDK.getNextStreamId();
+    const streamCount = Math.min(count, Number(nextStreamId));
+
+    const streams = [];
+    for (let i = 0; i < streamCount; i++) {
+      const streamId = BigInt(i);
+      const stream = await parallelPaySDK.getStream(streamId);
+      const balance = await parallelPaySDK.balanceOf(streamId);
+
+      streams.push({
+        id: i,
+        sender: stream.sender,
+        senderUrl: getExplorerAddressUrl(stream.sender, chainId),
+        recipient: stream.recipient,
+        recipientUrl: getExplorerAddressUrl(stream.recipient, chainId),
+        deposit: ethers.formatEther(stream.deposit),
+        startTime: Number(stream.startTime),
+        stopTime: Number(stream.stopTime),
+        ratePerSecond: ethers.formatEther(stream.ratePerSecond),
+        remainingBalance: ethers.formatEther(stream.remainingBalance),
+        availableBalance: ethers.formatEther(balance),
+        isActive: stream.isActive,
+      });
+    }
+
+    res.json({
+      network: deploymentInfo?.network,
+      chainId: chainId,
+      totalStreams: Number(nextStreamId),
+      streams,
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/streams/:count', async (req, res) => {
   try {
     if (!parallelPaySDK) {
       return res.status(503).json({ error: 'SDK not initialized - deploy contracts first' });
@@ -203,13 +246,13 @@ app.get('/api/stream/:id', async (req, res) => {
 /**
  * List payment requests
  */
-app.get('/api/payment-requests/:count?', async (req, res) => {
+app.get('/api/payment-requests', async (req, res) => {
   try {
     if (!x402SDK) {
       return res.status(503).json({ error: 'SDK not initialized' });
     }
 
-    const count = parseInt(req.params.count || '10');
+    const count = parseInt(req.query.count as string || '10');
     const requests = [];
 
     for (let i = 0; i < count; i++) {
