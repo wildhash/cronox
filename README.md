@@ -4,6 +4,173 @@
 
 Cronos ParallelPay is an AI-native payment infrastructure for the x402 protocol, enabling autonomous agents to buy APIs, data, and services via HTTP 402 with gasless USDC.e payments through the Cronos x402 Facilitator (EIP-3009).
 
+---
+
+## 🎯 Judge Mode (5-Minute Demo)
+
+**Get the full x402 payment flow running in under 5 minutes:**
+
+### Prerequisites
+- Node.js 18+ installed
+- Cronos Testnet CRO (for gas) - [Get from faucet](https://cronos.org/faucet)
+- Cronos Testnet USDC.e (for payments) - [Get from faucet](https://faucet.cronos.org)
+
+### Quick Start
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/wildhash/cronos.git
+cd cronos
+
+# 2. Install dependencies
+npm install --legacy-peer-deps
+
+# 3. Configure environment
+cp .env.example .env
+# Edit .env and add your PRIVATE_KEY (testnet wallet with CRO + USDC.e)
+
+# 4. Run the complete demo
+npm run demo
+```
+
+### Expected Output
+
+The demo runs three services and demonstrates the full x402 payment flow:
+
+1. **Seller API** starts on `http://localhost:3001`
+2. **Dashboard** starts on `http://localhost:3000`
+3. **Buyer Agent** executes the payment flow:
+   - ✅ Sends GET request to `/api/premium-data`
+   - ✅ Receives HTTP 402 with payment requirements
+   - ✅ Signs EIP-3009 authorization (gasless!)
+   - ✅ Retries with `X-PAYMENT` header
+   - ✅ Seller verifies & settles via Cronos Facilitator
+   - ✅ Returns premium data + transaction hash
+   - ✅ Dashboard displays the payment receipt
+
+**Look for these key outputs:**
+- `[Agent] Received 402 Payment Required` - x402 challenge
+- `[Agent] Signing EIP-3009 authorization...` - Payment creation
+- `[x402] Payment settled! TxHash: 0x...` - Settlement proof
+- Explorer link to view transaction on Cronos Testnet
+
+### Alternative: Step-by-Step Demo
+
+```bash
+# Terminal 1 - Start services
+npm run demo:watch
+
+# Terminal 2 - Trigger payment (after services are ready)
+npm run demo:pay
+
+# View Dashboard
+open http://localhost:3000
+```
+
+---
+
+## ✅ What's Working Today
+
+### Production Ready
+- ✅ **x402 Protocol**: Full HTTP 402 challenge-response flow
+- ✅ **Gasless Payments**: EIP-3009 `transferWithAuthorization` - buyers pay no gas
+- ✅ **Facilitator Integration**: Verify & settle via Cronos x402 Facilitator
+- ✅ **Buyer Agent**: Autonomous agent that detects 402 and handles payment
+- ✅ **Seller API**: Express server with x402 middleware
+- ✅ **Dashboard**: Real-time payment receipt viewer
+- ✅ **Smart Contracts**: SLA-backed streaming with graduated refund tiers
+- ✅ **Contract Spec**: JSON Schema for x402 protocol (`contracts/x402.json`)
+
+### Demo Flows
+- ✅ Premium data paywall with x402
+- ✅ AI inference endpoint with payment
+- ✅ Payment verification and settlement
+- ✅ On-chain proof of payment
+
+## 🚧 What's Next (WIP)
+
+### In Development
+- 🚧 **SLA Monitoring Agent**: Continuous endpoint sampling for latency/uptime
+- 🚧 **Automated Refund Triggers**: Smart contract refunds on SLA breach
+- 🚧 **Multi-tier Breach Detection**: 10%/25%/50% graduated refunds
+- 🚧 **Real-time SLA Dashboard**: Live metrics visualization
+- 🚧 **Agent Oracle Integration**: Off-chain metrics → on-chain validation
+
+### Planned Features
+- 📋 Streaming payment flows (pay-per-second)
+- 📋 Multi-token support (USDC, USDT, etc.)
+- 📋 Cross-chain facilitator support
+
+---
+
+## 📊 SLA Scenario: API Latency Guarantee
+
+### The Promise
+A data provider offers a **Premium Real-Time Market Data API** with strict SLA guarantees:
+
+- **Latency**: <200ms p95 response time
+- **Uptime**: 99.9% availability
+- **Error Rate**: <0.5% failed requests
+
+Cost: **0.10 USDC.e per call** or **$100/month subscription**
+
+### The Guarantee (Graduated Refunds)
+
+| Breach Level | Condition | Refund | Example |
+|--------------|-----------|---------|---------|
+| **Minor** | p95 latency >200ms for 5 minutes | 10% | 5 min breach = $0.01 refund per call |
+| **Moderate** | Daily uptime <99.5% | 25% | 99.0% uptime = $25 monthly refund |
+| **Severe** | Uptime <99% OR p99 >500ms | 50% | 98% uptime = $50 monthly refund |
+| **Critical** | 3+ severe breaches in 24h | 100% + auto-cancel | Full refund + stream stops |
+
+### How It Works
+
+1. **Stream Creation**: Buyer creates SLA-backed payment stream
+   ```typescript
+   const slaConfig = {
+     maxLatencyMs: 200,        // p95 threshold
+     minUptimePercent: 9990,   // 99.90% minimum
+     maxErrorRate: 50,         // 0.50% max errors
+     refundTier1: 1000,        // 10% refund (minor)
+     refundTier2: 2500,        // 25% refund (moderate)
+     refundTier3: 5000,        // 50% refund (severe)
+     autoStopOnSevereBreach: true
+   };
+   ```
+
+2. **Monitoring**: Agent Oracle samples the API every 10 seconds
+   - Records response times
+   - Tracks success/failure rates
+   - Calculates rolling p95/p99 metrics
+
+3. **Breach Detection**: When SLA is violated:
+   - Agent Oracle submits signed breach report to `AgentOracle.sol`
+   - Smart contract validates the report
+   - `RefundManager.sol` calculates refund amount based on breach tier
+   - Funds are automatically released to buyer
+
+4. **Auto-Stop**: On critical breach (3+ severe in 24h):
+   - Stream is automatically paused
+   - Remaining funds returned to buyer
+   - Seller must acknowledge and fix issues before resuming
+
+### Real-World Example
+
+**Day 1-5**: API performs perfectly (p95 = 150ms, uptime = 100%)
+- Buyer pays 500 calls × $0.10 = **$50**
+- No refunds
+
+**Day 6**: Database slowdown causes latency spike
+- p95 jumps to 350ms for 30 minutes
+- Breach detected → **25% refund** = $12.50 back to buyer
+- Provider gets alert and fixes database
+
+**Day 7-30**: Performance restored, no further issues
+- Final cost: $50.00 initial - $12.50 refund = **$37.50 net cost**
+- Buyer got exactly what they paid for: good service most of the time, automatic refund when SLA broke
+
+---
+
 ## What Makes This Different
 
 - **x402 Native**: Full HTTP 402 payment flow with Cronos x402 Facilitator integration
@@ -69,8 +236,8 @@ Cronos ParallelPay is an AI-native payment infrastructure for the x402 protocol,
 
 ```bash
 # Clone the repository
-git clone https://github.com/wildhash/parallel-pay.git cronos-parallelpay
-cd cronos-parallelpay
+git clone https://github.com/wildhash/cronos.git
+cd cronos
 
 # Install dependencies
 npm install
@@ -186,6 +353,66 @@ const slaConfig = {
 // Tier 2: 25% refund (moderate breach)
 // Tier 3: 50% refund (severe breach)
 ```
+
+## 📋 x402 Contract Specification
+
+The x402 payment protocol is formally specified in [`contracts/x402.json`](contracts/x402.json) as a JSON Schema (v1.0.0).
+
+### 402 Payment Required Response
+
+When a client requests a protected resource without payment, the server returns:
+
+```http
+HTTP/1.1 402 Payment Required
+Content-Type: application/json
+X-Payment-Required: true
+```
+
+```json
+{
+  "paymentRequired": true,
+  "amount": "100000",
+  "currency": "USDC.e",
+  "recipient": "0x1234567890123456789012345678901234567890",
+  "chainId": 338,
+  "token": "0xc01efAaF7C5C61bEbFAeb358E1161b537b8bC0e0",
+  "facilitatorUrl": "https://facilitator.cronoslabs.org/v2/x402",
+  "description": "Premium market data access",
+  "network": "Cronos Testnet"
+}
+```
+
+### X-PAYMENT Header Format
+
+The client retries the request with an `X-PAYMENT` header containing base64-encoded JSON:
+
+```http
+GET /api/premium-data HTTP/1.1
+X-PAYMENT: eyJ0eXBlIjoiZWlwMzAwOSIsImNoYWluSWQiOjMzOCwidG9rZW4iOi...
+```
+
+Decoded payload (EIP-3009 authorization):
+
+```json
+{
+  "type": "eip3009",
+  "chainId": 338,
+  "token": "0xc01efAaF7C5C61bEbFAeb358E1161b537b8bC0e0",
+  "from": "0x9876543210987654321098765432109876543210",
+  "to": "0x1234567890123456789012345678901234567890",
+  "value": "100000",
+  "validAfter": 0,
+  "validBefore": 1737374400,
+  "nonce": "0x1234567890abcdef...",
+  "v": 27,
+  "r": "0xabcdef...",
+  "s": "0x123456..."
+}
+```
+
+### Schema Validation
+
+The seller API validates all 402 responses against the schema to ensure compliance. See [`contracts/x402.json`](contracts/x402.json) for the complete specification including all required/optional fields and validation rules.
 
 ## Network Configuration
 
@@ -355,6 +582,112 @@ npm run test-hardhat         # Run Hardhat tests only
 - [Quick Start for Buyers](https://docs.cronos.org/cronos-x402-facilitator/quick-start-for-buyers)
 - [Cronos EVM Docs](https://docs.cronos.org)
 - [Crypto.com AI Agent SDK](https://ai-agent-sdk-docs.crypto.com/)
+
+## 🔧 Troubleshooting
+
+### Installation Issues
+
+**Problem**: `npm install` fails with dependency conflicts
+```bash
+# Solution: Use legacy peer deps
+npm install --legacy-peer-deps
+```
+
+**Problem**: `Cannot find package 'solc'`
+```bash
+# Solution: Dependencies not installed
+npm install --legacy-peer-deps
+```
+
+### Demo Issues
+
+**Problem**: `PRIVATE_KEY` environment variable error
+```bash
+# Solution: Configure .env file
+cp .env.example .env
+# Edit .env and add your testnet private key
+```
+
+**Problem**: Seller API not starting / "Address already in use"
+```bash
+# Solution: Port 3001 is occupied
+lsof -ti:3001 | xargs kill -9  # Kill process on port 3001
+npm run seller-api
+```
+
+**Problem**: Dashboard not starting / "Address already in use"
+```bash
+# Solution: Port 3000 is occupied
+lsof -ti:3000 | xargs kill -9  # Kill process on port 3000
+npm run dashboard
+```
+
+### Payment Issues
+
+**Problem**: "Insufficient funds" error
+```bash
+# Solution: Get testnet tokens
+# 1. CRO (for gas): https://cronos.org/faucet
+# 2. USDC.e (for payments): https://faucet.cronos.org
+```
+
+**Problem**: Payment verification failed
+```bash
+# Solution: Check your wallet has USDC.e
+# The buyer wallet needs USDC.e tokens (not just CRO)
+# Get USDC.e from: https://faucet.cronos.org
+```
+
+**Problem**: "Facilitator unreachable" error
+```bash
+# Solution: Check network connectivity
+# Ensure you can reach: https://facilitator.cronoslabs.org/v2/x402
+curl https://facilitator.cronoslabs.org/v2/x402/supported
+```
+
+**Problem**: ChainId mismatch
+```bash
+# Solution: Verify you're on Cronos Testnet (338)
+# Check your RPC URL in .env:
+CRONOS_TESTNET_RPC_URL=https://evm-t3.cronos.org
+```
+
+### Contract Deployment Issues
+
+**Problem**: Deployment fails with "insufficient funds"
+```bash
+# Solution: Your wallet needs CRO for gas
+# Get testnet CRO from: https://cronos.org/faucet
+```
+
+**Problem**: "Cannot connect to network"
+```bash
+# Solution: Check RPC URL in .env
+CRONOS_TESTNET_RPC_URL=https://evm-t3.cronos.org
+```
+
+### Reset / Clean State
+
+**Problem**: Want to start fresh
+```bash
+# Stop all services
+pkill -f "seller-api"
+pkill -f "dashboard"
+
+# Clean deployed contracts (optional)
+rm -rf deployments/
+
+# Reinstall dependencies
+rm -rf node_modules package-lock.json
+npm install --legacy-peer-deps
+```
+
+**Problem**: Test failures
+```bash
+# Clean and rebuild
+npm run compile
+npm test
+```
 
 ## Security
 

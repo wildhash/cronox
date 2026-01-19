@@ -1,0 +1,197 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://cronos.org/schemas/x402/v1.0.0",
+  "title": "x402 Payment Protocol for Cronos",
+  "description": "JSON Schema for x402 HTTP 402 Payment Required responses and payment headers",
+  "version": "1.0.0",
+  "definitions": {
+    "PaymentRequiredResponse": {
+      "type": "object",
+      "required": [
+        "paymentRequired",
+        "amount",
+        "currency",
+        "recipient",
+        "chainId",
+        "facilitatorUrl"
+      ],
+      "properties": {
+        "paymentRequired": {
+          "type": "boolean",
+          "const": true,
+          "description": "Indicates that payment is required to access this resource"
+        },
+        "amount": {
+          "type": "string",
+          "pattern": "^[0-9]+$",
+          "description": "Payment amount in smallest token units (e.g., 100000 = 0.10 USDC.e with 6 decimals)"
+        },
+        "currency": {
+          "type": "string",
+          "enum": ["USDC.e", "USDC"],
+          "description": "Currency denomination for the payment"
+        },
+        "recipient": {
+          "type": "string",
+          "pattern": "^0x[a-fA-F0-9]{40}$",
+          "description": "Ethereum address of the payment recipient (seller)"
+        },
+        "chainId": {
+          "type": "integer",
+          "enum": [25, 338],
+          "description": "Blockchain network ID (25 = Cronos Mainnet, 338 = Cronos Testnet)"
+        },
+        "token": {
+          "type": "string",
+          "pattern": "^0x[a-fA-F0-9]{40}$",
+          "description": "Token contract address (USDC.e)"
+        },
+        "facilitatorUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "Base URL of the Cronos x402 Facilitator service"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of what the payment is for"
+        },
+        "network": {
+          "type": "string",
+          "description": "Network name (e.g., 'Cronos Testnet', 'Cronos Mainnet')"
+        },
+        "resource": {
+          "type": "string",
+          "description": "Optional resource identifier or path"
+        },
+        "expiresAt": {
+          "type": "integer",
+          "description": "Optional Unix timestamp when this payment requirement expires"
+        },
+        "error": {
+          "type": "string",
+          "description": "Error message if payment verification/settlement failed"
+        },
+        "details": {
+          "type": "string",
+          "description": "Additional error details"
+        }
+      },
+      "additionalProperties": true
+    },
+    "EIP3009Authorization": {
+      "type": "object",
+      "required": [
+        "type",
+        "chainId",
+        "token",
+        "from",
+        "to",
+        "value",
+        "validAfter",
+        "validBefore",
+        "nonce",
+        "v",
+        "r",
+        "s"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "eip3009",
+          "description": "Payment authorization type"
+        },
+        "chainId": {
+          "type": "integer",
+          "description": "Blockchain network ID"
+        },
+        "token": {
+          "type": "string",
+          "pattern": "^0x[a-fA-F0-9]{40}$",
+          "description": "Token contract address (USDC.e)"
+        },
+        "from": {
+          "type": "string",
+          "pattern": "^0x[a-fA-F0-9]{40}$",
+          "description": "Payer address"
+        },
+        "to": {
+          "type": "string",
+          "pattern": "^0x[a-fA-F0-9]{40}$",
+          "description": "Recipient address"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[0-9]+$",
+          "description": "Transfer amount in smallest token units"
+        },
+        "validAfter": {
+          "type": "integer",
+          "description": "Unix timestamp after which the authorization is valid"
+        },
+        "validBefore": {
+          "type": "integer",
+          "description": "Unix timestamp before which the authorization is valid"
+        },
+        "nonce": {
+          "type": "string",
+          "pattern": "^0x[a-fA-F0-9]{64}$",
+          "description": "Random 32-byte nonce"
+        },
+        "v": {
+          "type": "integer",
+          "description": "ECDSA signature recovery parameter"
+        },
+        "r": {
+          "type": "string",
+          "pattern": "^0x[a-fA-F0-9]{64}$",
+          "description": "ECDSA signature r value"
+        },
+        "s": {
+          "type": "string",
+          "pattern": "^0x[a-fA-F0-9]{64}$",
+          "description": "ECDSA signature s value"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PaymentHeader": {
+      "description": "X-PAYMENT header contains base64-encoded JSON with EIP-3009 authorization",
+      "type": "string",
+      "contentEncoding": "base64",
+      "contentMediaType": "application/json"
+    }
+  },
+  "examples": [
+    {
+      "description": "Example 402 Payment Required Response",
+      "response": {
+        "paymentRequired": true,
+        "amount": "100000",
+        "currency": "USDC.e",
+        "recipient": "0x1234567890123456789012345678901234567890",
+        "chainId": 338,
+        "token": "0xc01efAaF7C5C61bEbFAeb358E1161b537b8bC0e0",
+        "facilitatorUrl": "https://facilitator.cronoslabs.org/v2/x402",
+        "description": "Premium market data access",
+        "network": "Cronos Testnet"
+      }
+    },
+    {
+      "description": "Example X-PAYMENT Header (decoded)",
+      "payment": {
+        "type": "eip3009",
+        "chainId": 338,
+        "token": "0xc01efAaF7C5C61bEbFAeb358E1161b537b8bC0e0",
+        "from": "0x9876543210987654321098765432109876543210",
+        "to": "0x1234567890123456789012345678901234567890",
+        "value": "100000",
+        "validAfter": 0,
+        "validBefore": 1737374400,
+        "nonce": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+        "v": 27,
+        "r": "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+        "s": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+      }
+    }
+  ]
+}
