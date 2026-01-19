@@ -6,25 +6,22 @@
   "scripts": {
     "compile": "node scripts/compile.js",
     "verify": "npx tsx scripts/verify-contracts.ts",
-
     "deploy": "npx tsx scripts/deploy.ts --network=cronos-testnet",
     "deploy:cronos-testnet": "npx tsx scripts/deploy.ts --network=cronos-testnet",
     "deploy:cronos": "npx tsx scripts/deploy.ts --network=cronos",
     "deploy:monad-testnet": "npx tsx scripts/deploy.ts --network=monad-testnet",
-
     "seller-api": "npx tsx apps/seller-api/index.ts",
     "buyer-agent": "npx tsx apps/buyer-agent/index.ts",
     "dashboard": "npx tsx dashboard/server.ts",
-
+    "demo": "concurrently --kill-others --success first \"npm run seller-api\" \"npm run dashboard\" \"npx wait-on http://localhost:3001/api/health && npm run buyer-agent\"",
+    "demo:watch": "concurrently --kill-others \"npm run seller-api\" \"npm run dashboard\"",
+    "demo:pay": "npx wait-on http://localhost:3001/api/health && npm run buyer-agent",
     "stress-test": "npx tsx scripts/stress-test.ts",
     "stress-parallel": "npx tsx scripts/stress-parallel.ts",
     "simulate-degradation": "npx tsx scripts/simulate-degradation.ts",
-
     "test-local": "npx tsx scripts/test-local.ts",
     "test-hardhat": "npx hardhat test",
     "test": "npm run compile && npm run test-hardhat",
-
-    "demo": "npm run seller-api & sleep 2 && npm run buyer-agent",
     "start": "npm run dashboard"
   },
   "keywords": [
@@ -42,8 +39,8 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@nomicfoundation/hardhat-ethers": "^3.1.2",
     "@nomicfoundation/hardhat-chai-matchers": "^2.1.0",
+    "@nomicfoundation/hardhat-ethers": "^3.1.2",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.14",
     "@nomicfoundation/hardhat-verify": "^2.0.13",
     "@typechain/ethers-v6": "^0.5.1",
@@ -53,13 +50,15 @@
     "@types/mocha": "^10.0.10",
     "@types/node": "^24.10.1",
     "chai": "^6.2.1",
+    "concurrently": "^9.2.1",
     "ethers": "^6.16.0",
     "hardhat": "^3.0.17",
     "solc": "^0.8.24",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
     "typechain": "^8.3.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "wait-on": "^9.0.3"
   },
   "dependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^2.1.0",
@@ -69,7 +68,7 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "https://github.com/wildhash/parallel-pay.git"
+    "url": "https://github.com/wildhash/cronos.git"
   },
   "engines": {
     "node": ">=18.0.0"
