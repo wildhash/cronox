@@ -121,52 +121,9 @@ app.get('/api/info', (req, res) => {
 });
 
 /**
- * List streams
+ * List streams handler
  */
-app.get('/api/streams', async (req, res) => {
-  try {
-    if (!parallelPaySDK) {
-      return res.status(503).json({ error: 'SDK not initialized - deploy contracts first' });
-    }
-
-    const count = parseInt(req.query.count as string || '10');
-    const nextStreamId = await parallelPaySDK.getNextStreamId();
-    const streamCount = Math.min(count, Number(nextStreamId));
-
-    const streams = [];
-    for (let i = 0; i < streamCount; i++) {
-      const streamId = BigInt(i);
-      const stream = await parallelPaySDK.getStream(streamId);
-      const balance = await parallelPaySDK.balanceOf(streamId);
-
-      streams.push({
-        id: i,
-        sender: stream.sender,
-        senderUrl: getExplorerAddressUrl(stream.sender, chainId),
-        recipient: stream.recipient,
-        recipientUrl: getExplorerAddressUrl(stream.recipient, chainId),
-        deposit: ethers.formatEther(stream.deposit),
-        startTime: Number(stream.startTime),
-        stopTime: Number(stream.stopTime),
-        ratePerSecond: ethers.formatEther(stream.ratePerSecond),
-        remainingBalance: ethers.formatEther(stream.remainingBalance),
-        availableBalance: ethers.formatEther(balance),
-        isActive: stream.isActive,
-      });
-    }
-
-    res.json({
-      network: deploymentInfo?.network,
-      chainId: chainId,
-      totalStreams: Number(nextStreamId),
-      streams,
-    });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.get('/api/streams/:count', async (req, res) => {
+const listStreamsHandler = async (req: any, res: any) => {
   try {
     if (!parallelPaySDK) {
       return res.status(503).json({ error: 'SDK not initialized - deploy contracts first' });
@@ -207,7 +164,13 @@ app.get('/api/streams/:count', async (req, res) => {
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
-});
+};
+
+/**
+ * List streams - two routes for Express 5 compatibility
+ */
+app.get('/api/streams', listStreamsHandler);
+app.get('/api/streams/:count', listStreamsHandler);
 
 /**
  * Get stream details
@@ -244,9 +207,9 @@ app.get('/api/stream/:id', async (req, res) => {
 });
 
 /**
- * List payment requests
+ * List payment requests handler
  */
-app.get('/api/payment-requests', async (req, res) => {
+const listPaymentRequestsHandler = async (req: any, res: any) => {
   try {
     if (!x402SDK) {
       return res.status(503).json({ error: 'SDK not initialized' });
@@ -285,7 +248,13 @@ app.get('/api/payment-requests', async (req, res) => {
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
-});
+};
+
+/**
+ * List payment requests - two routes for Express 5 compatibility
+ */
+app.get('/api/payment-requests', listPaymentRequestsHandler);
+app.get('/api/payment-requests/:count', listPaymentRequestsHandler);
 
 /**
  * List x402 payments (from seller-api)
