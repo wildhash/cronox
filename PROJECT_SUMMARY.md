@@ -12,7 +12,7 @@ ParallelPay is a micro-payment streaming protocol built for Monad's parallel EVM
 ## 📁 Project Structure
 
 ```
-monad-parallelstream/
+cronox/
 ├── contracts/                  # Solidity smart contracts
 │   ├── ParallelPay.sol        # Main streaming contract (8KB)
 │   └── X402Payment.sol        # Agent payment protocol (9.5KB)

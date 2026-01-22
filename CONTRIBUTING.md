@@ -57,8 +57,8 @@ Be respectful, constructive, and collaborative. We're building something great t
 
 ```bash
 # Clone your fork
-git clone https://github.com/YOUR_USERNAME/monad-parallelstream.git
-cd monad-parallelstream
+git clone https://github.com/YOUR_USERNAME/cronox.git
+cd cronox
 
 # Install dependencies
 npm install
