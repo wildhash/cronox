@@ -301,6 +301,12 @@
                 const response = await fetch('/api/streams/20');
                 const data = await response.json();
 
+                // Handle error responses (SDK not initialized, etc)
+                if (data.error || !data.streams) {
+                    container.innerHTML = '<div class="loading">Streams not available. Deploy contracts to enable streaming.</div>';
+                    return;
+                }
+
                 if (data.streams.length === 0) {
                     container.innerHTML = '<div class="loading">No streams found. Run the stress test to create some!</div>';
                     return;

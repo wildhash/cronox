@@ -30,6 +30,7 @@ const SELLER_URL = `http://localhost:${SELLER_PORT}`;
 const DASHBOARD_URL = `http://localhost:${DASHBOARD_PORT}`;
 const MAX_HEALTH_RETRIES = 30; // 30 seconds
 const HEALTH_CHECK_INTERVAL = 1000; // 1 second
+const STARTUP_GRACE_MS = 12000; // allow slower cold starts
 
 let sellerProcess = null;
 let dashboardProcess = null;
@@ -152,16 +153,19 @@ function startProcess(name, command, args, color = COLORS.cyan) {
       reject(error);
     });
 
-    // Give it a moment to start
+    // Give it a longer grace period to start
     setTimeout(() => {
       if (proc.exitCode === null) {
         printSuccess(`${name} process started`);
         resolve(proc);
       } else {
-        printError(`${name} exited immediately with code ${proc.exitCode}`);
+        printError(`${name} exited during startup with code ${proc.exitCode}`);
+        if (output.trim()) {
+          console.log(output.trim());
+        }
         reject(new Error(`${name} failed to start`));
       }
-    }, 3000);
+    }, STARTUP_GRACE_MS);
   });
 }
 
