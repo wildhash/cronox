@@ -12,8 +12,8 @@
 ### Clone and Install
 
 ```bash
-git clone https://github.com/wildhash/monad-parallelstream.git
-cd monad-parallelstream
+git clone https://github.com/wildhash/cronox.git
+cd cronox
 npm install
 ```
 
@@ -481,7 +481,7 @@ Set up alerts for:
 
 ## Support
 
-- **GitHub Issues**: https://github.com/wildhash/monad-parallelstream/issues
+- **GitHub Issues**: https://github.com/wildhash/cronox/issues
 - **Documentation**: See README.md and ARCHITECTURE.md
 - **Examples**: See EXAMPLES.md
 
